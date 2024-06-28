@@ -1,0 +1,15 @@
+services:
+  redis:
+    image: 'bitnami/redis:latest'
+    environment:
+      - REDIS_PASSWORD=password
+      - REDIS_AOF_ENABLED=no
+    volumes:
+      - "./docker/redis:/bitnami"
+    ports:
+      - "6379:6379"
+  redisinsight:
+    container_name: redisinsight
+    image: redislabs/redisinsight
+    ports:
+      - "8081:8001"
