@@ -6,19 +6,17 @@ export async function redisGetHandler(Redis, axios, apiPath, path, reset = false
     }
 
     try {
-        const [redisKey, ...keyArray] = path.split('/').filter(item => !!item)
-        const key = keyArray.join('/');
         if (!reset) {
-            const cachedData = await Redis.hget('Api_' + redisKey, key);
+            const cachedData = await Redis.get(path);
             if (cachedData) {
                 return JSON.parse(cachedData)
             }
-        }   
+        }
         const {data} = await axios.get(url);
         if (data) {
-            await Redis.hset('Api_' + redisKey, key, JSON.stringify(data));
+            await Redis.set(path, JSON.stringify(data));
         } else {
-            await Redis.hdel('Api_' + redisKey, key);
+            await Redis.set(path);
         }
         return data;
     } catch(e) {
