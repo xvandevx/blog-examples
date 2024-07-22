@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export async function redisGetHandler(Redis, apiPath, apiCode, reset = false) {
-    let url = `${apiPath}/${apiCode}`;
+    const url = `${apiPath}/${apiCode}`;
     if (!Redis) {
         return await fetchData(url);
     }
