@@ -1,4 +1,3 @@
-import axios from "axios";
 import catalog from "./catalog";
 
 const config = {
@@ -6,5 +5,5 @@ const config = {
 }
 
 export const Api = {
-    catalog: catalog(axios, config),
+    catalog: catalog(config),
 }
