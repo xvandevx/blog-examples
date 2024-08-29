@@ -1,0 +1,78 @@
+name: deploy nextjs and nestjs to AWS
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push-frontend:
+    runs-on: ubuntu-latest
+
+    if: contains(github.event_name, 'push') && !startsWith(github.event.head_commit.message, 'backend')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push frontend to Docker Hub
+        uses: docker/build-push-action@v2
+        with:
+          context: frontend
+          file: frontend/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_FRONTEND_IMAGE }}:latest
+
+      - name: SSH into the remote server and deploy frontend
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_SERVER_HOST }}
+          username: ${{ secrets.REMOTE_SERVER_USERNAME }}
+          password: ${{ secrets.REMOTE_SERVER_SSH_KEY }}
+          port: ${{ secrets.REMOTE_SERVER_SSH_PORT }}
+          script: |
+            cd wn/
+            docker rmi -f ${{ secrets.DOCKER_FRONTEND_IMAGE }}:latest
+            docker-compose down
+            docker-compose up -d
+
+  build-and-push-backend:
+    runs-on: ubuntu-latest
+
+    if: contains(github.event_name, 'push') && !startsWith(github.event.head_commit.message, 'frontend')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push backend to Docker Hub
+        uses: docker/build-push-action@v2
+        with:
+          context: backend
+          file: backend/Dockerfile
+          push: true
+          tags: xvandev/${{ secrets.DOCKER_BACKEND_IMAGE }}:latest
+
+      - name: SSH into the remote server and deploy backend
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_SERVER_HOST }}
+          username: ${{ secrets.REMOTE_SERVER_USERNAME }}
+          password: ${{ secrets.REMOTE_SERVER_SSH_KEY }}
+          port: ${{ secrets.REMOTE_SERVER_SSH_PORT }}
+          script: |
+            cd wn/
+            docker rmi -f ${{ secrets.DOCKER_BACKEND_IMAGE }}:latest
+            docker-compose down
+            docker-compose up -d

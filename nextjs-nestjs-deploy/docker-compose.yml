@@ -1,0 +1,53 @@
+services:
+    nginx:
+        image: nginx:alpine
+        ports:
+            - "80:80"
+        volumes:
+            - "./docker/nginx/conf.d:/etc/nginx/conf.d"
+            - "./docker/nginx/certs:/etc/nginx/certs"
+        depends_on:
+            - frontend
+            - backend
+        networks:
+            - internal-network
+            - external-network
+
+    frontend:
+        image: ${FRONTEND_IMAGE}
+        restart: always
+        networks:
+            - internal-network
+
+    backend:
+        image: ${BACKEND_IMAGE}
+        environment:
+            NODE_ENV: ${NODE_ENV}
+            POSTGRES_HOST: ${POSTGRES_HOST}
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DB}
+        depends_on:
+            - postgres
+        restart: always
+        networks:
+            - internal-network
+
+    postgres:
+        image: postgres:12.1-alpine
+        container_name: postgres
+        volumes:
+            - "./docker/postgres:/var/lib/postgresql/data"
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DB}
+        ports:
+            - "5432:5432"
+
+networks:
+    internal-network:
+        driver: bridge
+
+    external-network:
+        driver: bridge
